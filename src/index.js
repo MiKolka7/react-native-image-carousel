@@ -305,6 +305,7 @@ class ImageCarousel extends React.Component<PropsType, StateType> {
   };
 
   handleChangeIdx = (idx: number) => {
+    this.refs.scrollView.scrollTo({x: screenWidth * idx, animated: false});
     this.setState({selectedIdx: idx});
     if (this.props.onIdxChange) {
       this.props.onIdxChange(idx);
@@ -431,11 +432,15 @@ class ImageCarousel extends React.Component<PropsType, StateType> {
     return (
       <View style={style}>
         <ScrollView
+          ref="scrollView"
           horizontal={horizontal}
           contentContainerStyle={contentContainerStyle}
           scrollEnabled={!animating}
           alwaysBounceHorizontal={false}
           showsHorizontalScrollIndicator={false}
+          scrollEventThrottle={16}
+          pageSize={1}
+          pagingEnabled
         >
           {this.getChildren().map((child, idx) => (
             <TouchableWithoutFeedback

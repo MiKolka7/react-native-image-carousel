@@ -222,6 +222,7 @@ var ImageCarousel = function (_React$Component) {
         _this.setState({ selectedImageHidden: true });
       }
     }, _this.handleChangeIdx = function (idx) {
+      _this.refs.scrollView.scrollTo({ x: screenWidth * idx, animated: false });
       _this.setState({ selectedIdx: idx });
       if (_this.props.onIdxChange) {
         _this.props.onIdxChange(idx);
@@ -409,11 +410,15 @@ var ImageCarousel = function (_React$Component) {
         React.createElement(
           reactNative.ScrollView,
           {
+            ref: 'scrollView',
             horizontal: horizontal,
             contentContainerStyle: contentContainerStyle,
             scrollEnabled: !animating,
             alwaysBounceHorizontal: false,
-            showsHorizontalScrollIndicator: false
+            showsHorizontalScrollIndicator: false,
+            scrollEventThrottle: 16,
+            pageSize: 1,
+            pagingEnabled: true
           },
           this.getChildren().map(function (child, idx) {
             return React.createElement(
