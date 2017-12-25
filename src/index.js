@@ -38,6 +38,7 @@ type PropsType = {|
   onIdxChange?: ?(idx: number) => void,
   onOpen?: ?() => void,
   onClose?: ?() => void,
+  onTouch?: ?() => void,
   horizontal?: boolean,
 |};
 type StateType = {|
@@ -112,7 +113,10 @@ class ImageCarousel extends React.Component<PropsType, StateType> {
           this.setState({panning: true});
         }
       },
-      onPanResponderRelease: this.handlePanEnd,
+      // eslint-disable-next-line flowtype/no-weak-types
+      onPanResponderRelease: (evt: Object, gestureState: Object) => {
+        this.handlePanEnd(evt, gestureState, true);
+      },
       onPanResponderTerminate: this.handlePanEnd,
     });
   }
@@ -236,7 +240,22 @@ class ImageCarousel extends React.Component<PropsType, StateType> {
     });
 
   // eslint-disable-next-line flowtype/no-weak-types
-  handlePanEnd = (evt: Object, gestureState: {dx: number, dy: number}) => {
+  handlePanEnd = (
+    evt: Object,
+    gestureState: {dx: number, dy: number},
+    isView: boolean,
+  ) => {
+    if (
+      isView &&
+      gestureState.moveX === 0 &&
+      gestureState.moveY === 0 &&
+      gestureState.dx === 0 &&
+      gestureState.dy === 0
+    ) {
+      if (this.props.onTouch) {
+        this.props.onTouch();
+      }
+    }
     // eslint-disable-next-line no-magic-numbers
     if (Math.abs(gestureState.dy) > 150) {
       this.setState({
@@ -377,12 +396,17 @@ class ImageCarousel extends React.Component<PropsType, StateType> {
 
   renderFullscreen = () => {
     const {renderHeader, renderFooter} = this.props;
-    const {animating, panning, fullscreen, selectedIdx} = this.state;
+    const {animating, panning, fullscreen} = this.state;
+    let {selectedIdx} = this.state;
 
     const opacity = this.getFullscreenOpacity();
 
     const header = renderHeader && renderHeader(selectedIdx);
     const footer = renderFooter && renderFooter(selectedIdx);
+
+    if (this.getChildren().length === selectedIdx) {
+      selectedIdx -= 1;
+    }
 
     return (
       <Modal
@@ -395,6 +419,7 @@ class ImageCarousel extends React.Component<PropsType, StateType> {
         <SwipeableViews
           disabled={animating || panning}
           index={selectedIdx}
+          threshold={1}
           onChangeIndex={this.handleChangeIdx}
         >
           {this.getChildren().map(this.renderFullscreenContent)}
@@ -429,6 +454,14 @@ class ImageCarousel extends React.Component<PropsType, StateType> {
       opacity: selectedImageHidden && selectedIdx === idx ? 0 : 1,
     });
 
+    // eslint-disable-next-line flowtype/no-weak-types
+    const onMomentumScrollEnd = (event: Object) => {
+      const index = Math.round(
+        event.nativeEvent.contentOffset.x / (this.props.width || screenWidth),
+      );
+      this.handleChangeIdx(index);
+    };
+
     return (
       <View style={style}>
         <ScrollView
@@ -441,6 +474,7 @@ class ImageCarousel extends React.Component<PropsType, StateType> {
           scrollEventThrottle={16}
           pageSize={1}
           pagingEnabled
+          onMomentumScrollEnd={onMomentumScrollEnd}
         >
           {this.getChildren().map((child, idx) => (
             <TouchableWithoutFeedback

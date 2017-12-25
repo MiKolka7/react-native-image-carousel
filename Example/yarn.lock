@@ -2581,8 +2581,8 @@ react-devtools-core@^2.5.0:
     shell-quote "^1.6.1"
     ws "^2.0.3"
 
-"react-native-image-carousel@file:../":
-  version "0.4.1"
+"react-native-image-carousel@file:..":
+  version "0.4.5"
   dependencies:
     react-swipeable-views-native "^0.12.9"
 

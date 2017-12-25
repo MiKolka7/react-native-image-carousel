@@ -151,7 +151,12 @@ var ImageCarousel = function (_React$Component) {
           onComplete();
         }
       });
-    }, _this.handlePanEnd = function (evt, gestureState) {
+    }, _this.handlePanEnd = function (evt, gestureState, isView) {
+      if (isView && gestureState.moveX === 0 && gestureState.moveY === 0 && gestureState.dx === 0 && gestureState.dy === 0) {
+        if (_this.props.onTouch) {
+          _this.props.onTouch();
+        }
+      }
       // eslint-disable-next-line no-magic-numbers
       if (Math.abs(gestureState.dy) > 150) {
         _this.setState({
@@ -306,6 +311,10 @@ var ImageCarousel = function (_React$Component) {
       var header = renderHeader && renderHeader(selectedIdx);
       var footer = renderFooter && renderFooter(selectedIdx);
 
+      if (_this.getChildren().length === selectedIdx) {
+        selectedIdx -= 1;
+      }
+
       return React.createElement(
         reactNative.Modal,
         {
@@ -320,6 +329,7 @@ var ImageCarousel = function (_React$Component) {
           {
             disabled: animating || panning,
             index: selectedIdx,
+            threshold: 1,
             onChangeIndex: _this.handleChangeIdx
           },
           _this.getChildren().map(_this.renderFullscreenContent)
@@ -374,7 +384,10 @@ var ImageCarousel = function (_React$Component) {
             _this2.setState({ panning: true });
           }
         },
-        onPanResponderRelease: this.handlePanEnd,
+        // eslint-disable-next-line flowtype/no-weak-types
+        onPanResponderRelease: function onPanResponderRelease(evt, gestureState) {
+          _this2.handlePanEnd(evt, gestureState, true);
+        },
         onPanResponderTerminate: this.handlePanEnd
       });
     }
@@ -404,6 +417,12 @@ var ImageCarousel = function (_React$Component) {
         };
       };
 
+      // eslint-disable-next-line flowtype/no-weak-types
+      var onMomentumScrollEnd = function onMomentumScrollEnd(event) {
+        var index = Math.round(event.nativeEvent.contentOffset.x / (_this3.props.width || screenWidth));
+        _this3.handleChangeIdx(index);
+      };
+
       return React.createElement(
         reactNative.View,
         { style: style },
@@ -418,7 +437,8 @@ var ImageCarousel = function (_React$Component) {
             showsHorizontalScrollIndicator: false,
             scrollEventThrottle: 16,
             pageSize: 1,
-            pagingEnabled: true
+            pagingEnabled: true,
+            onMomentumScrollEnd: onMomentumScrollEnd
           },
           this.getChildren().map(function (child, idx) {
             return React.createElement(
